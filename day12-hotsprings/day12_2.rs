@@ -1,129 +1,131 @@
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::path::Path;
-use itertools::Itertools;
-
-
-/* 
-This is very much a work in progress. I solved part 1 on a computer that's not connected to my GitHub, so it's not posted yet, but it will be.
-My part 1 solution is a bruteforce, which works fine with the small dataset in that part, but completely fails on the massive dataset for part 2.
-*/
-
-
-/* TODO: node doesn't get passed the substring, it calculates it on its own? Maybe? Idk. */
-
-#[derive(Debug)]
-struct Node {
-    substring: String,
-    index: usize,
-    left: Option<Box<Node>>,
-    right: Option<Box<Node>>,
-}
-
-impl Node {
-    fn new(substring: String, i: usize) -> Self {
-        Node { 
-            substring, 
-            index, 
-            left: None, 
-            right: None 
-        }
-    }
-}
-
-
-#[derive(Debug)]
-struct BinaryTree {
-    root: Option<Box<Node>>,
-    arrangement: Vec<usize>,
-    unknowns: Vec<usize>,
-    orig_string: String,
-}
-
-impl BinaryTree {
-    fn new(orig_string: String, arrangement: Vec<usize>, unknowns: Vec<usize>) -> Self {
-        let init_substring = if unknowns.len() > 1 && unknowns[1] > 0 && unknowns[1] <= orig_string.len() {
-            orig_string[..unknowns[1] - 1].to_string()
-        } else {
-            orig_string.to_string()
-        };
-
-        let root = Some(Box::new(Node::new(init_substring, unknowns[0])));
-
-        BinaryTree {
-            root,
-            arrangement,
-            unknowns,
-            orig_string,
-        }
-    }
-
-    fn insert(&mut self, index: usize) {
-        self.root = self.insert_recursive(self.root.take(), index);
-    }
-
-    fn insert_recursive(&mut self, node: Option<Box<Node>>, value: String, index: usize) -> Option<Box<Node>> {
-        match node {
-            Some(mut n) => {
-                if index < n.1 {
-                    n.left = self.insert_recursive(n.left.take(), index)
-                } else {
-                    n.right = self.insert_recursive(n.right.take(), index)
-                }
-                Some(n)
-            }
-            None => Some(Box::new(Node::new(index)));
-        }
-    }
-
-    fn inorder_traversal(&self, node: &Option<Box<Node>>) {
-        if let Some(n) == node {
-            self.inorder_traversal(&n.left);
-
-
-        }
-    }
-
-    fn prune(&mut self, condition: &Fn(&Node) -> bool) {
-        if let Some(ref mut left) == self.left {
-            if condition(&**left) {
-                self.left = None;
-            } else {
-                left.prune(condition);
-            }
-        }
-        if let Some(ref mut right) = self.right {
-            if condition(&**right) {
-                self.right = None;
-            } else {
-                right.prune(condition);
-            }
-        }
-    }
-
-    fn traverse(&self) {
-        self.inorder_traversal(&self.root);
-    }
-}
-
-
+use std::collections::HashMap;
 
 fn main() {
     let input: Vec<String> = get_input("./example.txt");
 
+    let mut combinations: HashMap<String, (Vec<usize>, usize, bool)> = HashMap::new();
+    let mut substr = "".to_string();
     let mut total = 0;
 
     for line in input {
+        let mut count = 0;
         let (springs, arrangement) = unfold(line);
 
-        let unknowns: Vec<usize> = springs.match_indices('?').map(|(i, _)|i).collect();
-        let broken: Vec<usize> = springs.match_indices('#').map(|(i, _)|i).collect();
-        let operational: Vec<usize> = springs.match_indices('.').map(|(i, _)|i).collect();
+        // Build the initial substring
+        for ch in springs.chars() {
+            if ch == '?' {
+                break;
+            } else {
+                substr.push(ch);
+            }
+        }
 
-        let start_substring = springs[..unknowns[0]].to_string();
-        let mut tree = BinaryTree::new(start_substring, arrangement, unknowns);
-        println!("{:#?}", tree);
+        combinations.insert(substr.clone(), (vec![], 0, true));
+
+        next_substring(springs, substr.clone(), arrangement, &mut combinations, &mut count);
+        total += count;
     }
+
+    println!("{}", total);
+}
+
+
+fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize>, combinations: &mut HashMap<String, (Vec<usize>, usize, bool)>, total: &mut usize) {
+
+    println!("orig_str: {}, initial substr: {}, arr: {:?}", orig_string, substring, arrangement);
+    let i = substring.len();
+    
+    let c = combinations.get(&substring).unwrap().clone();
+
+    let mut arr_vec = c.0.clone();
+    let mut running_count = c.1;
+
+    let mut next_unk = false;
+
+    'outer: for opt in vec!["#", "."] {
+        let mut running_str = substring.clone();
+        running_str += opt;
+
+        println!("{}: substr: {}, arr: {:?}", opt, running_str, arrangement);
+        match opt {
+            "#" => {
+                running_count += 1;
+
+                if running_count > arrangement[arr_vec.len()] {
+                    combinations.insert(running_str.clone(), (c.0.clone(), running_count, false));
+                    break;
+                }
+            },
+
+            "." => {
+                arr_vec.push(running_count);
+                running_count = 0;
+                if arr_vec.len() > arrangement.len() || *arr_vec.last().unwrap() != arrangement[arr_vec.len()] {
+                    combinations.insert(running_str.clone(), (c.0.clone(), running_count, false));
+                }
+            },
+
+            _ => continue,
+        }
+
+        for ch in orig_string[i..].chars() {
+            if ch == '?' {
+                println!("FINAL SUBSTRING: {}", running_str);
+                next_unk = true;
+                break;
+            }
+
+            running_str.push(ch);
+
+            if ch == '#' {
+                running_count += 1;
+                let mut cur = 0;
+
+                if arr_vec.len() == 0 {
+                    cur = 0;
+                } else {
+                    cur = arr_vec.len() - 1;
+                }
+
+                println!("# : substr: {}, running: {}, arr_vec: {:?}, cur: {}, arrangement: {:?}, arrangement[cur]: {}", running_str, running_count, arr_vec, cur, arrangement, arrangement[cur]);
+                if running_count > arrangement[cur] {
+                    println!("# : BREAK");
+                    running_str = substring.clone() + opt;
+                    combinations.insert(running_str.clone(), (c.0.clone(), c.1, false));
+                    break 'outer;
+                }
+                combinations.insert(running_str.clone(), (arr_vec.clone(), running_count, true));
+            
+            } else if ch == '.' {
+                arr_vec.push(running_count);
+                running_count = 0;
+                let cur = arr_vec.len() - 1;
+                println!(". : running: {}, arr_vec: {:?}, cur: {}, arrangement: {:?}, arrangement[cur]: {}", running_count, arr_vec, cur, arrangement, arrangement[cur]);
+
+                if cur > arrangement.len() || arr_vec[cur] != arrangement[cur] {
+                    println!(". : {} fails, breaking", running_str);
+                    running_str = substring.clone() + opt;
+                    combinations.insert(running_str.clone(), (c.0.clone(), c.1, false));
+                    break 'outer;
+                }
+
+
+                combinations.insert(running_str.clone(), (arr_vec.clone(), running_count, true));
+            }
+        }
+        println!("does this even work? {}", running_str.clone());
+        combinations.entry(running_str.clone()).or_insert((arr_vec.clone(), running_count, true));
+        next_substring(orig_string.clone(), running_str.clone(), arrangement.clone(), combinations, total);
+    }
+
+    if !next_unk {
+        *total += 1;
+        return;
+    }
+
 }
 
 
