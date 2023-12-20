@@ -4,13 +4,19 @@ use std::path::Path;
 use std::collections::HashMap;
 
 fn main() {
-    let input: Vec<String> = get_input("./example.txt");
+    let input: Vec<String> = get_input("./input2.txt");
 
-    let mut combinations: HashMap<String, (Vec<usize>, usize, bool)> = HashMap::new();
-    let mut substr = "".to_string();
     let mut total = 0;
 
+    let num_lines = input.len();
+    let mut i = 0;
+
     for line in input {
+        i += 1;
+
+        let mut combinations: HashMap<String, (Vec<usize>, usize, bool)> = HashMap::new();
+
+        let mut substr = "".to_string();
         let mut count = 0;
         let (springs, arrangement) = unfold(line);
 
@@ -27,15 +33,14 @@ fn main() {
 
         next_substring(springs, substr.clone(), arrangement, &mut combinations, &mut count);
         total += count;
+        println!("{} of {}\ncount: {}\nrunning total: {}", i, num_lines, count, total);
     }
 
-    println!("{}", total);
+    println!("\n{}", total);
 }
 
 
 fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize>, combinations: &mut HashMap<String, (Vec<usize>, usize, bool)>, total: &mut usize) {
-
-    println!("orig_str: {}, initial substr: {}, arr: {:?}", orig_string, substring, arrangement);
     let i = substring.len();
     
     let c = combinations.get(&substring).unwrap().clone();
@@ -43,89 +48,100 @@ fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize
     let mut arr_vec = c.0.clone();
     let mut running_count = c.1;
 
+    if i >= orig_string.len() {
+        if arr_vec == arrangement {
+            *total += 1;
+        }
+        return;
+    }
+
     let mut next_unk = false;
 
     'outer: for opt in vec!["#", "."] {
-        let mut running_str = substring.clone();
-        running_str += opt;
-
-        println!("{}: substr: {}, arr: {:?}", opt, running_str, arrangement);
+        arr_vec = c.0.clone();
+        running_count = c.1;
+     
+        let mut running_str = substring.clone() + opt;
+                
         match opt {
             "#" => {
                 running_count += 1;
 
-                if running_count > arrangement[arr_vec.len()] {
+                if arr_vec.len() >= arrangement.len() || running_count > arrangement[arr_vec.len()] {
                     combinations.insert(running_str.clone(), (c.0.clone(), running_count, false));
-                    break;
+                    continue 'outer;
                 }
             },
 
             "." => {
-                arr_vec.push(running_count);
-                running_count = 0;
-                if arr_vec.len() > arrangement.len() || *arr_vec.last().unwrap() != arrangement[arr_vec.len()] {
-                    combinations.insert(running_str.clone(), (c.0.clone(), running_count, false));
+                if running_count != 0 {
+                    arr_vec.push(running_count);
+                    running_count = 0;
+                    if arr_vec.len() > arrangement.len() || *arr_vec.last().unwrap() != arrangement[arr_vec.len() - 1] {
+                        combinations.insert(running_str.clone(), (c.0.clone(), running_count, false));
+                        continue 'outer;
+                    }
                 }
             },
 
             _ => continue,
         }
 
-        for ch in orig_string[i..].chars() {
-            if ch == '?' {
-                println!("FINAL SUBSTRING: {}", running_str);
-                next_unk = true;
-                break;
-            }
+        next_unk = false;
 
-            running_str.push(ch);
+        for ch in orig_string[i+1..].chars() {
 
-            if ch == '#' {
-                running_count += 1;
-                let mut cur = 0;
+            match ch {
+                '?' => {
+                    next_unk = true;
+                    break;
+                },
 
-                if arr_vec.len() == 0 {
-                    cur = 0;
-                } else {
-                    cur = arr_vec.len() - 1;
-                }
+                '#' => {
+                    running_str.push(ch);
+                    
+                    running_count += 1;
+                    if arr_vec.len() >= arrangement.len() || running_count > arrangement[arr_vec.len()] {
+                        running_str = substring.clone() + opt;
+                        combinations.insert(running_str.clone(), (c.0.clone(), c.1, false));
+                        continue 'outer;
+                    }
+                    combinations.insert(running_str.clone(), (arr_vec.clone(), running_count, true));
+                },
 
-                println!("# : substr: {}, running: {}, arr_vec: {:?}, cur: {}, arrangement: {:?}, arrangement[cur]: {}", running_str, running_count, arr_vec, cur, arrangement, arrangement[cur]);
-                if running_count > arrangement[cur] {
-                    println!("# : BREAK");
-                    running_str = substring.clone() + opt;
-                    combinations.insert(running_str.clone(), (c.0.clone(), c.1, false));
-                    break 'outer;
-                }
-                combinations.insert(running_str.clone(), (arr_vec.clone(), running_count, true));
-            
-            } else if ch == '.' {
-                arr_vec.push(running_count);
-                running_count = 0;
-                let cur = arr_vec.len() - 1;
-                println!(". : running: {}, arr_vec: {:?}, cur: {}, arrangement: {:?}, arrangement[cur]: {}", running_count, arr_vec, cur, arrangement, arrangement[cur]);
+                '.' => {
+                    running_str.push(ch);
 
-                if cur > arrangement.len() || arr_vec[cur] != arrangement[cur] {
-                    println!(". : {} fails, breaking", running_str);
-                    running_str = substring.clone() + opt;
-                    combinations.insert(running_str.clone(), (c.0.clone(), c.1, false));
-                    break 'outer;
-                }
+                    if running_count == 0 { continue; }
+                    arr_vec.push(running_count);
+                    running_count = 0;
 
+                    if arr_vec.len() > arrangement.len() || *arr_vec.last().unwrap() != arrangement[arr_vec.len() - 1] {
+                        running_str = substring.clone() + opt;
+                        combinations.insert(running_str.clone(), (c.0.clone(), c.1, false));
+                        continue 'outer;
+                    }
+                    combinations.insert(running_str.clone(), (arr_vec.clone(), running_count, true));
+                },
 
-                combinations.insert(running_str.clone(), (arr_vec.clone(), running_count, true));
+                _ => continue,
             }
         }
-        println!("does this even work? {}", running_str.clone());
+
+        if !next_unk {
+            if running_count != 0 {
+                arr_vec.push(running_count);
+            }
+            if arr_vec == arrangement {
+                *total += 1;
+            }
+            return;
+        }
+
         combinations.entry(running_str.clone()).or_insert((arr_vec.clone(), running_count, true));
+        //println!("recursive call");
         next_substring(orig_string.clone(), running_str.clone(), arrangement.clone(), combinations, total);
     }
-
-    if !next_unk {
-        *total += 1;
-        return;
-    }
-
 }
 
 
