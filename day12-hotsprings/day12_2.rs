@@ -2,54 +2,66 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::path::Path;
 use std::collections::HashMap;
+use rayon::prelude::*;
 
 fn main() {
-    let input: Vec<String> = get_input("./input2.txt");
+    let input: Vec<String> = get_input("./input.txt");
 
-    let mut total = 0;
+    // Use Rayon to process the input strings in parallel.
+    // This takes forever to run sequentially. It also takes forever to run in parallel (like, for real),
+    // but it's at least manageable this way.
+    let total: usize = input
+        .par_iter()
+        .enumerate()
+        .map(|(i, line)| {
+            let (springs, arrangement) = unfold(line.clone());
 
-    let num_lines = input.len();
-    let mut i = 0;
-
-    for line in input {
-        i += 1;
-
-        let mut combinations: HashMap<String, (Vec<usize>, usize, bool)> = HashMap::new();
-
-        let mut substr = "".to_string();
-        let mut count = 0;
-        let (springs, arrangement) = unfold(line);
+            let mut substr = String::new();
+            let mut current_total = 0;
+            let mut count = 0;
+            let mut arr_vec: Vec<usize> = vec![];
 
         // Build the initial substring
         for ch in springs.chars() {
-            if ch == '?' {
-                break;
-            } else {
-                substr.push(ch);
+            match ch {
+                '?' => break,
+                '#' => {
+                    substr.push(ch);
+                    count += 1;
+                },
+                '.' => {
+                    substr.push(ch);
+                    if count != 0 {
+                        arr_vec.push(count);
+                        count = 0;
+                    }
+                },
+                _ => continue,
             }
         }
 
-        combinations.insert(substr.clone(), (vec![], 0, true));
-
-        next_substring(springs, substr.clone(), arrangement, &mut combinations, &mut count);
-        total += count;
-        println!("{} of {}\ncount: {}\nrunning total: {}", i, num_lines, count, total);
-    }
+        // Call the first instance of the recursive algorithm
+        next_substring(&springs, &substr, &arrangement, &arr_vec, count, &mut current_total);
+        println!("{} of {}\ncurrent total: {}", i + 1, input.len(), current_total);
+        current_total
+    })
+    .sum();
 
     println!("\n{}", total);
 }
 
 
-fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize>, combinations: &mut HashMap<String, (Vec<usize>, usize, bool)>, total: &mut usize) {
+// Starts processing at a '?' and tries both '#' and '.', checks the substring from that point to the next '?' to see if the current '#' or '.'
+// causes the substring to become invalid (outside the bounds of the given arrangement). If it doesn't, recursively call this function and check
+// both options for the next substring. If this option does cause the substring to become invalid, go back and try the next option.
+fn next_substring(orig_string: &str, substring: &str, arrangement: &Vec<usize>, running_arr: &Vec<usize>, count: usize, total: &mut usize) {
     let i = substring.len();
     
-    let c = combinations.get(&substring).unwrap().clone();
-
-    let mut arr_vec = c.0.clone();
-    let mut running_count = c.1;
+    let mut arr_vec = running_arr.clone();
+    let mut running_count = count;
 
     if i >= orig_string.len() {
-        if arr_vec == arrangement {
+        if arr_vec == *arrangement {
             *total += 1;
         }
         return;
@@ -57,18 +69,18 @@ fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize
 
     let mut next_unk = false;
 
+    // Check both '#' and '.'
     'outer: for opt in vec!["#", "."] {
-        arr_vec = c.0.clone();
-        running_count = c.1;
+        arr_vec = running_arr.clone();
+        running_count = count;
      
-        let mut running_str = substring.clone() + opt;
+        let mut running_str = substring.to_owned() + opt;
                 
         match opt {
             "#" => {
                 running_count += 1;
 
                 if arr_vec.len() >= arrangement.len() || running_count > arrangement[arr_vec.len()] {
-                    combinations.insert(running_str.clone(), (c.0.clone(), running_count, false));
                     continue 'outer;
                 }
             },
@@ -78,7 +90,6 @@ fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize
                     arr_vec.push(running_count);
                     running_count = 0;
                     if arr_vec.len() > arrangement.len() || *arr_vec.last().unwrap() != arrangement[arr_vec.len() - 1] {
-                        combinations.insert(running_str.clone(), (c.0.clone(), running_count, false));
                         continue 'outer;
                     }
                 }
@@ -89,6 +100,7 @@ fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize
 
         next_unk = false;
 
+        // Iterate through the current substring until reaching another '?'
         for ch in orig_string[i+1..].chars() {
 
             match ch {
@@ -102,11 +114,8 @@ fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize
                     
                     running_count += 1;
                     if arr_vec.len() >= arrangement.len() || running_count > arrangement[arr_vec.len()] {
-                        running_str = substring.clone() + opt;
-                        combinations.insert(running_str.clone(), (c.0.clone(), c.1, false));
                         continue 'outer;
                     }
-                    combinations.insert(running_str.clone(), (arr_vec.clone(), running_count, true));
                 },
 
                 '.' => {
@@ -117,30 +126,28 @@ fn next_substring(orig_string: String, substring: String, arrangement: Vec<usize
                     running_count = 0;
 
                     if arr_vec.len() > arrangement.len() || *arr_vec.last().unwrap() != arrangement[arr_vec.len() - 1] {
-                        running_str = substring.clone() + opt;
-                        combinations.insert(running_str.clone(), (c.0.clone(), c.1, false));
                         continue 'outer;
                     }
-                    combinations.insert(running_str.clone(), (arr_vec.clone(), running_count, true));
                 },
 
                 _ => continue,
             }
         }
 
+        // If we've reached the end of the string, check if the running arrangement vector matches the given arrangement vector,
+        // and if so, the current permutation is valid, so we increment the total counter
         if !next_unk {
             if running_count != 0 {
                 arr_vec.push(running_count);
             }
-            if arr_vec == arrangement {
+            if arr_vec == *arrangement {
                 *total += 1;
             }
             return;
         }
 
-        combinations.entry(running_str.clone()).or_insert((arr_vec.clone(), running_count, true));
-        //println!("recursive call");
-        next_substring(orig_string.clone(), running_str.clone(), arrangement.clone(), combinations, total);
+        // Recursively call the function for the next substring
+        next_substring(&orig_string, &running_str, &arrangement, &arr_vec, running_count, total);
     }
 }
 
