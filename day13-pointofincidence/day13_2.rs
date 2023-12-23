@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::path::Path;
-use std::cmp;
 use array2d::{Array2D};
 
 /*
@@ -17,7 +16,6 @@ fn main() {
     let maps = map_input(input);
     
     let mut total = 0;
-    let mut count = 0;
 
     for map in maps {
         total += fix_smudge(map);
@@ -156,7 +154,7 @@ fn check_mirror(map: Vec<Vec<u32>>, in1: usize, in2: usize) -> bool {
 
     // Once we have the two rows/cols across the axis of reflection, iterate in both
     // directions verifying that each pair is mirrored. 
-    while i >= 0 && j < map.len() { 
+    while j < map.len() { 
         let current_diff = diff(vec_to_int(map[i].clone()), vec_to_int(map[j].clone()));
 
         // Check the number of differences between the two rows/cols we're checking. If it's 0,
