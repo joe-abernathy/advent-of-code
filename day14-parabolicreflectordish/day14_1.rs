@@ -11,6 +11,7 @@ Set up a struct to handle the map, rock types, movement, etc. Part 1 only requir
 movement in other directions in part 2, so I've implemented all 4 directions.
 */
 
+
 #[derive(Debug, Clone, PartialEq)]
 enum Rock {
     Square,
@@ -19,7 +20,7 @@ enum Rock {
     Invalid,
 }
 
-
+#[derive(Clone, Copy)]
 enum Dir {
     N,
     S,
@@ -54,8 +55,18 @@ impl Map {
         self.grid.set(pos.0, pos.1, rock)
     }
 
+    fn tilt(&mut self, dir: Dir, start_pos: (usize, usize)) {
+        let mut rock = start_pos;
+        loop {
+            if let Some(new) = self.shift_once(dir, rock) {
+                rock = new;
+            } else {
+                break;
+            }
+        }
+    }
 
-    fn shift(&mut self, dir: Dir, pos: (usize, usize)) -> Option<(usize, usize)> {
+    fn shift_once(&mut self, dir: Dir, pos: (usize, usize)) -> Option<(usize, usize)> {
         let new_pos: (usize, usize);
 
         match dir {
@@ -109,6 +120,10 @@ impl Map {
     fn count_round_rocks(&self, row: usize) -> usize {
         let rocks = self.find_round_rocks(row);
         rocks.len()
+    }
+
+    fn calculate_load(&self) -> usize {
+        (0..self.rows).map(|i| (self.rows - i) * self.count_round_rocks(i)).sum()
     }
 
 
@@ -170,30 +185,18 @@ fn main() {
     let input = map_input("./input.txt").expect("Failed to open file");
 
     let mut map = Map::new(input);
-
-    let mut total = 0;
     
     // Iterate through the rows in the map and find all the round rocks in each row
     for (i, _) in map.grid.as_rows().iter().enumerate() {
         let round_rocks = map.find_round_rocks(i);
 
         // For each round rock found, shift it north until it can't go north anymore
-        for mut rock in round_rocks {
-            loop {
-                if let Some(new) = map.shift(Dir::N, rock) {
-                    rock = new;
-                } else {
-                    break;
-                }
-            }
+        for rock in round_rocks {
+            map.tilt(Dir::N, rock);
         }
     }
 
-    for (i, _) in map.grid.as_rows().iter().enumerate() {
-        total += (map.rows - i) * map.count_round_rocks(i);
-    }
-
-    println!("Total: {}", total);
+    println!("Total: {}", map.calculate_load());
 }   
 
 
