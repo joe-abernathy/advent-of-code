@@ -6,7 +6,9 @@ use array2d::Array2D;
 use std::collections::HashSet;
 
 /*
-I probably way overengineered this, but it works, so I'll take it.
+The cool thing about overengineering part 1 is that part 2 was fairly simple to implement. Just had to add vecs holding the
+edge positions and iterate through them. Since we ignore any beam splitters that we've already visited, this is fairly
+efficient and runs in less than a second, even though it's technically a bruteforce solution.
 */
 
 
@@ -36,6 +38,8 @@ struct Map {
     beam_stack: Vec<(Dir, (usize, usize))>,
     splits: HashSet<(usize, usize)>,
     mirrors: HashSet<((usize, usize), Dir)>,
+    rows: usize,
+    cols: usize,
 }
 
 
@@ -59,8 +63,10 @@ impl Map {
         let beam_stack: Vec<(Dir, (usize, usize))> = Vec::new();
         let splits: HashSet<(usize, usize)> = HashSet::new();
         let mirrors: HashSet<((usize, usize), Dir)> = HashSet::new();
+        let rows = grid.num_rows();
+        let cols = grid.num_columns();
 
-        Map { grid, energized, beam_stack, splits, mirrors }
+        Map { grid, energized, beam_stack, splits, mirrors, rows, cols }
     }
 
     fn get(&self, pos: (usize, usize)) -> Option<Tile> {
@@ -177,6 +183,7 @@ impl Map {
             self.energize(current_pos);        
             if let Some((next_dir, next_pos, split)) = self.step(current_dir, current_pos) {
 
+                //println!("{:?}/{:?} -> {:?}/{:?}", current_dir, current_pos, next_dir, next_pos);
                 current_dir = next_dir;
                 current_pos = next_pos;
     
@@ -218,15 +225,53 @@ impl Map {
 
 fn main() {
     let input = get_input("./input.txt");
-    let mut map = Map::new(input);
+    let mut map = Map::new(input.clone());
 
-    if let Some(start_tile) = map.get((0, 0)) {
-        let (start_dir, _) = map.get_next_dir(Dir::E, start_tile);
-        map.traverse(start_dir, (0, 0));
-        println!("Energized tiles: {}", map.energized.len());
-    } else {
-        println!("Couldn't get the start tile, something has gone horribly wrong");
+    let mut top_edge: Vec<(usize, usize)> = Vec::new();
+    let mut bottom_edge: Vec<(usize, usize)> = Vec::new();
+    let mut left_edge: Vec<(usize, usize)> = Vec::new();
+    let mut right_edge: Vec<(usize, usize)> = Vec::new();
+
+    for row in 0..map.rows - 1 {
+        left_edge.push((row, 0));
+        right_edge.push((row, map.cols - 1));
+    }    
+
+    for col in 0..map.cols - 1 {
+        top_edge.push((0, col));
+        bottom_edge.push((map.rows - 1, col));
     }
+
+    let mut max_tiles = 0;
+
+    let edges = [&top_edge, &bottom_edge, &left_edge, &right_edge];
+
+    for (i, edge) in edges.iter().enumerate() {
+        let dir = match i {
+            0 => Dir::S,
+            1 => Dir::N,
+            2 => Dir::E,
+            3 => Dir::W,
+            _ => unreachable!(),
+        };
+
+        for pos in *edge {
+            map = Map::new(input.clone());
+            
+            if let Some(start_tile) = map.get(*pos) {
+                let (start_dir, _) = map.get_next_dir(dir, start_tile);
+                map.traverse(start_dir, *pos);
+                let energized = map.energized.len();
+                if energized > max_tiles {
+                    max_tiles = energized;
+                }
+            } else {
+                println!("Couldn't start at {:?}", pos);
+            }
+        }
+    }
+
+    println!("Max: {}", max_tiles);
 }
 
 
