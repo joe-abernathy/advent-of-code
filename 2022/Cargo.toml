@@ -1,0 +1,3 @@
+[workspace]
+members = [ "aoc_helpers",
+    "day-*"]
