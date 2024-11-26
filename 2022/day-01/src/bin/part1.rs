@@ -1,7 +1,7 @@
 use aoc_helpers::{ * };
 
 fn main() {
-    let raw_input = get_input(2022, 1).expect("Error fetching input");
+    let raw_input = get_puzzle_input(2022, 1).expect("Error fetching input");
     let lines: Vec<String> = raw_input.lines().map(String::from).collect();
 
     let nums = str_vec_to_ints(lines);

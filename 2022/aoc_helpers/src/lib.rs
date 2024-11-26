@@ -1,10 +1,10 @@
 use std::fs::File;
-use std::io::{ self, prelude::*, BufReader };
+use std::io::{ prelude::*, BufReader };
 use std::env;
 use reqwest::blocking::Client;
 use std::error::Error;
 
-pub fn get_input(year: u16, day: u8) -> Result<String, Box<dyn Error>> {
+pub fn get_puzzle_input(year: u16, day: u8) -> Result<String, Box<dyn Error>> {
     let session_token = env::var("AOC_TOKEN")
         .expect("Environment variable AOC_TOKEN not set");
 
@@ -19,7 +19,7 @@ pub fn get_input(year: u16, day: u8) -> Result<String, Box<dyn Error>> {
     if !response.status().is_success() {
         return Err(format!("Failed to get input: {}", response.status()).into());
     }
-
+    
     Ok(response.text()?)
 }
 
