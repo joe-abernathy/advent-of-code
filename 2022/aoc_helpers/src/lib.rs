@@ -4,9 +4,10 @@ use std::env;
 use reqwest::blocking::Client;
 use std::error::Error;
 
-pub fn get_puzzle_input(year: u16, day: u8) -> Result<String, Box<dyn Error>> {
-    let session_token = env::var("AOC_TOKEN")
-        .expect("Environment variable AOC_TOKEN not set");
+
+// Gets the puzzle input from AoC's website and returns it as a string
+pub fn get_puzzle_input_as_string(year: u16, day: u8) -> Result<String, Box<dyn Error>> {
+    let session_token = env::var("AOC_TOKEN")?;
 
     let url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
     let client = Client::new();
@@ -23,6 +24,14 @@ pub fn get_puzzle_input(year: u16, day: u8) -> Result<String, Box<dyn Error>> {
     Ok(response.text()?)
 }
 
+// Gets the puzzle input from AoC's website and returns it as a vector of strings, split by line
+pub fn get_puzzle_input_as_lines(year: u16, day:u8) -> Result<Vec<String>, Box<dyn Error>> {
+    let raw_input = get_puzzle_input_as_string(year, day)?;
+    
+    Ok(raw_input.lines().map(String::from).collect())
+}
+
+// Reads input from a file and returns it as a vector of strings, split by line
 pub fn read_from_file(filename: &str) -> Vec<String> {
     let file = File::open(filename).expect("Error opening file");
     let reader = BufReader::new(file);

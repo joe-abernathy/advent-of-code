@@ -1,13 +1,13 @@
 use aoc_helpers::{ * };
 
-fn main() {
-    let raw_input = get_puzzle_input(2022, 1).expect("Failed to get input");
-    let lines: Vec<String> = raw_input.lines().map(String::from).collect();
-
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let lines = get_puzzle_input_as_lines(2022, 1)?;
     let nums = str_vec_to_ints(lines);
     let result = sum_top_three_cal_totals(nums);
 
     println!("{}", result);
+
+    Ok(())
 }
 
 fn str_vec_to_ints(input: Vec<String>) -> Vec<Vec<i32>> {

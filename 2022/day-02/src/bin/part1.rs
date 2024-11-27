@@ -84,14 +84,15 @@ impl<'a> Hand {
     }
 }
 
-fn main() {
-    let raw_input = get_puzzle_input(2022, 2).expect("Failed to get input");
-    let lines: Vec<String> = raw_input.lines().map(String::from).collect();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let lines = get_puzzle_input_as_lines(2022, 2)?;
 
     let games = get_games_from_lines(lines);
     let result = evaluate_totals(games);
 
     println!("{}", result);
+
+    Ok(())
 }
 
 // Convert a vector of strings (lines from the input) to the vector of vectors of chars needed for processing

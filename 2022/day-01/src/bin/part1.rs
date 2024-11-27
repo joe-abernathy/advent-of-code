@@ -1,12 +1,12 @@
 use aoc_helpers::{ * };
 
-fn main() {
-    let raw_input = get_puzzle_input(2022, 1).expect("Error fetching input");
-    let lines: Vec<String> = raw_input.lines().map(String::from).collect();
-
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let lines = get_puzzle_input_as_lines(2022, 1)?;
     let nums = str_vec_to_ints(lines);
 
     println!("{}", get_max_calories(nums));
+    
+    Ok(())
 }
 
 fn str_vec_to_ints(input: Vec<String>) -> Vec<Vec<i32>> {
