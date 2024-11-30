@@ -1,0 +1,8 @@
+[package]
+name = "day-07"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aoc_helpers = { workspace = true }
+itertools = "0.11"
