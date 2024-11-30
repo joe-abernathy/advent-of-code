@@ -130,6 +130,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "day-04"
+version = "0.1.0"
+dependencies = [
+ "aoc_helpers",
+]
+
+[[package]]
+name = "day-05"
+version = "0.1.0"
+dependencies = [
+ "aoc_helpers",
+]
+
+[[package]]
+name = "day-06"
+version = "0.1.0"
+dependencies = [
+ "aoc_helpers",
+]
+
+[[package]]
 name = "displaydoc"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -58,7 +58,7 @@ mod tests {
 
     #[test]
     fn example() {
-        let lines = read_from_file("example.txt");
+        let lines = read_from_file_as_lines("example.txt");
         let result = calculate_total(lines);
 
         assert_eq!(result, 157)

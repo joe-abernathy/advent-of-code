@@ -80,7 +80,7 @@ mod tests {
 
     #[test]
     fn example() -> Result<(), Box<dyn std::error::Error>> {
-        let lines = read_from_file("example.txt");
+        let lines = read_from_file_as_lines("example.txt");
         let pairs: Vec<(String, String)> = lines
             .into_iter()
             .map(|s| {

@@ -45,7 +45,7 @@ mod tests {
 
     #[test]
     fn example() {
-        let lines = read_from_file("example1_1.txt");
+        let lines = read_from_file_as_lines("example1_1.txt");
         let nums = str_vec_to_ints(lines);
         let result = get_max_calories(nums);
         assert_eq!(result, 24000)

@@ -123,7 +123,7 @@ mod tests {
 
     #[test]
     fn example() {
-        let lines = read_from_file("example.txt");
+        let lines = read_from_file_as_lines("example.txt");
         let games = get_games_from_lines(lines);
         let result = evaluate_totals(games);
 

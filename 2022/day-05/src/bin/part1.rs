@@ -93,7 +93,7 @@ mod tests {
 
     #[test]
     fn example() -> Result<(), Box<dyn std::error::Error>> {
-        let input = read_from_file("example.txt");
+        let input = read_from_file_as_lines("example.txt");
         let split_index = input.iter().position(|s| s.is_empty()).unwrap();
         let (crates, moves) = input.split_at(split_index);
         

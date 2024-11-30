@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{ prelude::*, BufReader };
 use std::env;
 use reqwest::blocking::Client;
@@ -31,8 +31,12 @@ pub fn get_puzzle_input_as_lines(year: u16, day:u8) -> Result<Vec<String>, Box<d
     Ok(raw_input.lines().map(String::from).collect())
 }
 
+pub fn read_from_file_as_string(filename: &str) -> String {
+    fs::read_to_string(filename).expect("Error opening file")
+}
+
 // Reads input from a file and returns it as a vector of strings, split by line
-pub fn read_from_file(filename: &str) -> Vec<String> {
+pub fn read_from_file_as_lines(filename: &str) -> Vec<String> {
     let file = File::open(filename).expect("Error opening file");
     let reader = BufReader::new(file);
 
