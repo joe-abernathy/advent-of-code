@@ -1,3 +1,22 @@
+/* 
+To complete this puzzle, I used nested hashmaps to model the file system. An outer hashmap represents
+the directories. This uses a string (representing the directory path) as a key, and a tuple with a u32
+(representing the directory's size) and an inner hashmap (storing the files in the directory). The inner
+hashmap has a string (representing the filename, no path) as a key, and a u32 (representing the filesize)
+as a value. 
+
+We iterate through all lines in the input, parsing commands and responses as needed. When we encounter a 
+new directory, we add a new key/value pair to the OUTER hashmap to represent that new directory. When we
+receive a response from "ls" indicating a new file, we add a new key/value pair to the INNER hashmap to 
+represent that file. When we do that, we also update the directory size field in the directory that 
+contains the file, as well as every parent . This is done by traversing up the directory structure until 
+we reach the root, incrementing the directory size for each.
+
+Once we finish parsing through the input, the hard part is over. Iterate through all directories in the
+file system, adding up all directory sizes greater than or equal to the minimum value in the puzzle input
+and return that total.
+*/
+
 use aoc_helpers::{ * };
 use std::error::Error;
 use std::collections::HashMap;
