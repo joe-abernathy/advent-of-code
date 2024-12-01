@@ -1,0 +1,8 @@
+[workspace]
+members = [ 
+    "aoc_helpers",
+    "day-*"
+    ]
+
+[workspace.dependencies]
+aoc_helpers = { path = "./aoc_helpers" }
