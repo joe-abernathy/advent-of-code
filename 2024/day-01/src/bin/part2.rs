@@ -14,6 +14,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // For each entry in the left vector, count the number of times that value appears in the right 
     // vector and then add it to the running total
+
+    // There's definitely a better way to do this, but that's gonna take some more Rust research,
+    // and honestly I don't care at this point. It works, shut up.
     for i in 0..left.len() {
         let current_count = right
             .iter()
@@ -29,14 +32,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn get_vecs_from_input(input: Vec<String>) -> (Vec<u32>, Vec<u32>) {
-    let mut left: Vec<u32> = Vec::new();
-    let mut right: Vec<u32> = Vec::new();
-
-    for line in input {
-        let split: Vec<&str> = line.split("   ").collect();
-        left.push(split[0].parse::<u32>().expect("Failed to parse string to u32"));
-        right.push(split[1].parse::<u32>().expect("Failed to parse string to u32"));
-    }
-
-    (left, right)
+    
+    // Used some Rust magic to make this more efficient than my previous method of iterating
+    // across each line, splitting by whitespace, and pushing to a couple of vectors.
+    input.iter().map(|line| {
+        let mut parts = line.split_whitespace();
+        (
+            parts.next().unwrap().parse::<u32>().expect("Failed to parse string to int (left)"),
+            parts.next().unwrap().parse::<u32>().expect("Failed to parse string to int (right)"),
+        )
+    }).unzip()
 }

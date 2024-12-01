@@ -10,17 +10,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (mut left, mut right) = get_vecs_from_input(input);
     
     // Sort the two vectors
-    left.sort();
-    right.sort();
+    // Probably unnecessary since this was plenty fast enough using stable sort, but optimizing a 
+    // bit using unstable sort since we don't care about the order of identical numbers
+    left.sort_unstable();
+    right.sort_unstable();
 
-    // Running total of difference values
-    let mut total: u32 = 0;
-
-    // Iterate across each entry in both vectors and get the absolute value of the difference
-    // between the two, then add it to the running total
-    for i in 0..left.len() {
-        total += left[i].abs_diff(right[i]);
-    }
+    // Found a more efficient way of summing the differences between each vector entry than the
+    // way I was doing it with a for loop or whatever
+    let total: u32 = left
+        .iter()
+        .zip(right.iter())
+        .map(|(l, r)| l.abs_diff(*r))
+        .sum();
 
     println!("{}", total);
 
@@ -29,15 +30,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 // Converts our original vector of strings to a pair of vectors of ints (left and right)
 fn get_vecs_from_input(input: Vec<String>) -> (Vec<u32>, Vec<u32>) {
-    let mut left: Vec<u32> = Vec::new();
-    let mut right: Vec<u32> = Vec::new();
 
-    for line in input {
-        let split: Vec<&str> = line.split("   ").collect();
-    
-        left.push(split[0].parse::<u32>().expect("Failed to parse string to u32"));
-        right.push(split[1].parse::<u32>().expect("Failed to parse string to u32"));
-    }
-
-    (left, right)
+    // Used some Rust magic to make this more efficient than my previous method of iterating
+    // across each line, splitting by whitespace, and pushing to a couple of vectors.
+    input.iter().map(|line| {
+        let mut parts = line.split_whitespace();
+        (
+            parts.next().unwrap().parse::<u32>().expect("Failed to parse string to int (left)"),
+            parts.next().unwrap().parse::<u32>().expect("Failed to parse string to int (right)"),
+        )
+    }).unzip()
 }
