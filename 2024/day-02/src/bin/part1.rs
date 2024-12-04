@@ -31,8 +31,7 @@ fn count_safe_reports(reports: Vec<Vec<i8>>) -> u32 {
             // 1 and 3, and the direction doesn't change
             v.windows(2).all(|w| {
                 let diff = w[0] - w[1];
-                diff.abs() > 0 && diff.abs() < 4 
-                && diff.signum() == direction
+                (1..4).contains(&diff.abs()) && diff.signum() == direction
             })
         })
 
