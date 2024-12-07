@@ -1,0 +1,22 @@
+[package]
+name = "day-05"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aoc_helpers = { workspace = true }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[lib]
+name = "day05"
+path = "src/bin/lib.rs"
+
+[[bench]]
+name = "benchmark"
+harness = false
+
+[[bin]]
+name = "day05"
+path = "src/bin/part1.rs"
