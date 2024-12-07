@@ -16,6 +16,12 @@ struct Guard {
     visited: HashSet<(i32, i32)>,
 }
 
+// This one was fun. I decided to make a Guard struct with methods for moving, turning,
+// parsing the next spot in the grid, etc. We create an instance of Guard andset her off
+// patrolling, and the step(), next_step(), and turn() functions handle everything else.
+// On each step, add the current position to a hashset attribute that will end up containing 
+// every unique position visited.
+
 impl<'a> Guard {
     fn new(ch: char, start_pos: (i32, i32), grid: HashMap<(i32, i32), char>) -> Self {
         let pos = start_pos;
