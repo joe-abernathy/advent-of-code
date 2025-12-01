@@ -2,4 +2,4 @@
 members = [
     "2022/day*",
     "2024/day*"
-, "helpers"]
+, "2025/aoc-helpers", "helpers"]
