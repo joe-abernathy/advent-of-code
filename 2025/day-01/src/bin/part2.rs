@@ -10,7 +10,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-// Make the moves indicated in the input and count the number of times the dial crosses 0
+// Make the moves indicated in the input and count the number of times the dial crosses 0. I'm sure there's a more efficient
+// way to do this, and I may try to simplify it later, but we're here now.
 fn count_zeros(input: Vec<i32>) -> u32 {
     let mut dial: i32 = 50;
     let mut zero_count: u32 = 0;
