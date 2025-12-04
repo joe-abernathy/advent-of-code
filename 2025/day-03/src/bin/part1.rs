@@ -19,10 +19,7 @@ fn parse_banks(input: Vec<String>) -> u32 {
     
     input
         .iter()
-        .for_each(|bank| {
-            let best = get_best_joltage(bank.to_string());
-            count += best;
-        });
+        .for_each(|bank| count += get_best_joltage(bank.to_string()));
 
     count
 }
