@@ -1,0 +1,12 @@
+[package]
+name = "day-08"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aoc_helpers.workspace = true
+triangle_matrix = "0.4.0"
+union-find = "0.4.3"
+
+[features]
+test = []
