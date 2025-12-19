@@ -1,0 +1,11 @@
+[package]
+name = "day-09"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aoc_helpers.workspace = true
+nalgebra = "0.34.1"
+
+[features]
+test = []
